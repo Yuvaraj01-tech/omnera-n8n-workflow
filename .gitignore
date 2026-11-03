@@ -1,0 +1,24 @@
+# Environment and sensitive credential files
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+
+# Node & n8n Local Data
+node_modules/
+.n8n/
+*.log
+
+# Python Cache & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Operating System Temporary Files
+.DS_Store
+Thumbs.db
