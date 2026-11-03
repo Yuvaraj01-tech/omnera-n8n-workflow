@@ -1,0 +1,708 @@
+{
+  "name": "Omnera",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {
+          "maxTokensToSample": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        544
+      ],
+      "id": "52e7cda4-cc99-410b-953a-a25027e630d3",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "NX7z2UClvZ9fCRgR",
+          "name": "Groq account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1,
+                3,
+                5
+              ],
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2576,
+        336
+      ],
+      "id": "bc328f4b-28fd-4755-87e4-9f62eb2cd36d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        320
+      ],
+      "id": "4aa5b49d-7c6d-420b-b30b-678c7c19ee25",
+      "name": "Wait",
+      "webhookId": "9f2f5a26-77fd-45de-acb3-e9d9de917c79"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.instagram.com/v25.0/17841433153289933/media",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $('Build Instagram Payload').item.json.image_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.caption }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_INSTAGRAM_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1056,
+        304
+      ],
+      "id": "0d9a4788-151f-4606-b199-d26a18b279ac",
+      "name": "Insta media",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.instagram.com/v25.0/17841433153289933/media_publish",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('Insta media').item.json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "YOUR_INSTAGRAM_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1600,
+        304
+      ],
+      "id": "d2fd0849-bb4d-4c93-9dc5-4c9ca6aac067",
+      "name": "Post"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cleanText = `\nOMNERA - Smarter Finance. Stronger Futures.\n\nOMNERA is a microfinance and financial management platform.\n\nCore features:\n- Loans\n- Daily EMIs\n- Field Agents\n- Real-Time Tracking\n- Business Analytics\n- Secure & Reliable\n\nMain message:\nSimplifying microfinance, empowering businesses, and bringing smarter financial management into one platform.\n\nTagline:\nMore than a platform. Your growth partner.\n\nStatus:\nComing Soon.\n`;\n\nreturn {\n  json: {\n    cleanText\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1872,
+        320
+      ],
+      "id": "8fce0c6d-e71d-47ab-940f-21d5c7ac4151",
+      "name": "Code in JavaScript",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f34634f4-6998-47c5-be23-d369d5d94840",
+              "leftValue": "={{ $json.Approval }}",
+              "rightValue": "Decline",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        304
+      ],
+      "id": "b0d1c65f-632e-4a16-a0e4-ef2b3e81fd95",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Post Approval  ",
+        "formDescription": "Review the generated post before publishing. Choose Approve to publish it or Decline to generate a new topic and content.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Approval",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Approve"
+                  },
+                  {
+                    "option": "Decline"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldType": "html",
+              "elementName": "Content Section",
+              "html": "   <img src=\"{{ $('Img1').item.json.data.url }}\" width=\"220\" height=\"220\" />"
+            },
+            {
+              "fieldLabel": "Content",
+              "fieldType": "textarea",
+              "defaultValue": "={{ $('Content_writer').item.json.output }}\n{{ $('Hastag').item.json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        320
+      ],
+      "id": "45e347a7-315c-4bc5-aa0b-4a82f627eba3",
+      "name": "Form",
+      "webhookId": "eda67514-ce2c-441e-a61b-9658b6478a1e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ntfy.sh/omnera_social_agent_7x9k2m4p",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain"
+            },
+            {
+              "name": "X-Click",
+              "value": "={{ $execution.resumeFormUrl }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "New Instagram post ready for approval — tap to review",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        96,
+        320
+      ],
+      "id": "88040303-4a83-4423-8712-37ad478a5fa0",
+      "name": "HTTP"
+    },
+    {
+      "parameters": {
+        "url": "https://finora.omnera.in/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2320,
+        368
+      ],
+      "id": "5f60a8f1-ed30-4625-8f53-cae26ee90d7c",
+      "name": "Company",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=KNOWLEDGE_BASE:\n{{ JSON.stringify($('Code in JavaScript').item.json, null, 2) }}\n\nPick today's topic from this data now, following your system instructions.",
+        "options": {
+          "systemMessage": "=You are the Topic Generator for a fintech company's social media content engine.\n\nYou will be given KNOWLEDGE_BASE data scraped from the company website — \nreal product features, real stats, and real hiring needs. Ground every \ntopic strictly in this data. Never invent features, numbers, or roles \nthat are not present in KNOWLEDGE_BASE.\n\nThere are two content categories. Alternate between them based on the \nCONTENT_TYPE input you receive:\n\n- \"product\": pick ONE feature or stat from KNOWLEDGE_BASE.features or \n  KNOWLEDGE_BASE.stats as today's topic.\n- \"career\": pick ONE open role from KNOWLEDGE_BASE.careers as today's topic.\n\nOutput EXACTLY one line, this format and nothing else:\n<Topic Name>: <one-sentence angle for the post>\n\nExample (product): Daily EMI Tracking: Show how field agents update EMI status in real time\nExample (career): Backend Engineer - FinTech Platform: Highlight ownership of payment infrastructure\n\nDo not include hashtags. Do not include a caption. Do not include markdown."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1584,
+        320
+      ],
+      "id": "8825481b-5166-49bf-85a5-634ba1811ae5",
+      "name": "Topic_Generator"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=TOPIC: {{ $('Topic_Generator').item.json.output }}\n\nKNOWLEDGE_BASE:\n{{ JSON.stringify($('Code in JavaScript').item.json, null, 2) }}\n\nLANGUAGE: {{ $('Language Picker').item.json.languageInstruction }}",
+        "options": {
+          "systemMessage": "You are the Content Writer for a fintech company's social media posts.\n\nYou will receive TOPIC (from Topic_Generator), KNOWLEDGE_BASE data, and a LANGUAGE/LENGTH instruction.\n\nWrite ONE social media caption for this topic in the company's confident, clear, professional-but-human voice.\n\nLENGTH AND LANGUAGE (highest priority):\n- The caption must be between 100 and 120 words. Never write fewer than 100 words. Use 5-8 sentences.\n- Follow the LANGUAGE instruction exactly. If it says Tamil, write the whole caption in Tamil (தமிழ்) script. Keep brand and technical words (OMNERA, EMI, Field Agents) in English.\n- Do not mix in a second language, and do not add a translation.\n\nSTRICT RULES:\n- Output ONLY the caption body text.\n- Do NOT include hashtags. Do NOT include a hashtag symbol (#) anywhere.\n- Do NOT include a title, header, label, or \"Caption:\" prefix.\n- Do NOT truncate or cut off mid-sentence. Always end on a complete sentence.\n- If TOPIC category is \"career\", write it as a hiring/recruitment post: what the role does, why it matters, who should apply, ending with a call to action to apply (English: \"Ready to build with us? Apply now.\" Tamil: \"எங்களுடன் இணைந்து உருவாக்கத் தயாரா? இப்போதே விண்ணப்பியுங்கள்.\").\n- If TOPIC category is \"product\", write it as a feature/benefit post grounded in the specific KNOWLEDGE_BASE description for that feature.\n- Never fabricate statistics, benefits, salaries, or claims not present in KNOWLEDGE_BASE.\n\nReturn plain text only. No JSON, no quotes around the text, no markdown.\n- Never mention encryption, certifications, compliance, \"monthly\" reports, market trends or any claim that is not in KNOWLEDGE_BASE.\n- OMNERA is launching soon. Never say \"try now\" or \"use today\". Use phrases like \"coming soon\" or \"stay tuned\".\n- Put the call to action as the LAST sentence. Write no sentence after it.\n- In Tamil, write English brand words with a hyphen before the suffix (OMNERA-வின்). Never add \"கள்\" to \"Field Agents\"."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1120,
+        288
+      ],
+      "id": "8626e597-084c-4fc6-ad0a-7962c9d070e1",
+      "name": "Content_writer"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate hashtags for this Instagram caption.\n\nCAPTION:\n{{ $('Content_writer').item.json.output }}\n\n{{ $('Language Picker').item.json.hashtagInstruction }}\n\nRULES:\n- Return ONLY the hashtags, separated by single spaces. Each one starts with #.\n- No sentences, no explanations, no questions, no numbering.\n- Hashtags must match the caption topic (microfinance, loans, EMI, field agents, real-time tracking).\n- Do not use #Blockchain, #Investing, #WealthTech, #DigitalBanking or #Payments.",
+        "options": {
+          "systemMessage": "You are the Hashtag Generator for a fintech company's social posts.\n\nYou will receive TOPIC and CONTENT (the caption already written).\n\nGenerate 8-12 relevant hashtags based only on TOPIC and CONTENT.\n\nSTRICT RULES:\n- Output ONLY the hashtags, space-separated, on a single line.\n- Every hashtag starts with # and has no spaces inside it \n  (e.g. #BackendEngineering, not #Backend Engineering).\n- Do NOT include any other text, labels, or explanation.\n- Do NOT include the caption text again.\n- Do NOT repeat the same hashtag twice.\n\nExample output:\n#Fintech #BackendEngineering #Payments #SecureData #RealTimeInsights #CodeTheFuture #FintechJobs #TechCareers"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -800,
+        272
+      ],
+      "id": "3ad55ddc-5df3-43cc-9a9c-bb9e30f28bec",
+      "name": "Hastag"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {
+          "maxTokensToSample": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        528
+      ],
+      "id": "b4fd5c4c-063f-4572-ac77-0c73e50ff447",
+      "name": "Groq Chat Model4",
+      "credentials": {
+        "groqApi": {
+          "id": "NX7z2UClvZ9fCRgR",
+          "name": "Groq account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = $('Content_writer').item.json.output.trim();\nconst hashtags = String($('Hastag').item.json.output || '')\n  .split(/\\s+/).filter(t => t.startsWith('#')).join(' ');\nconst imageUrl = $('Img1').item.json.data.url;\nconst edited = String($input.first().json.Content || '').trim();\n\nreturn [{\n  json: {\n    image_url: imageUrl,\n    caption: (edited || `${content}\\n\\n${hashtags}`).replace(/\\\\n/g, '\\n')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        320
+      ],
+      "id": "f505d83d-dd65-4d31-a965-6f18bfb5feb9",
+      "name": "Build Instagram Payload"
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:5000/generate",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "variant",
+              "value": "={{ $('Language Picker').item.json.variant }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -352,
+        240
+      ],
+      "id": "70d43357-1b0b-4e21-9586-b6db33fe8076",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "   for (const item of $input.all()) {\n     item.binary.data.fileName = 'poster.jpg';\n     item.binary.data.mimeType = 'image/jpeg';\n   }\n   return $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        240
+      ],
+      "id": "abff9efa-d8ab-4786-9f99-f53a8831fa2d",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.imgbb.com/1/upload",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "eb115931ac0a93806aa35579fa76782e"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "image",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7adc9dbe-3bb0-431b-8673-50afa8f92684",
+      "name": "Img1"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {
+          "maxTokensToSample": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -1728,
+        528
+      ],
+      "id": "451deb9f-c023-47dc-9592-54702efb2e83",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "NX7z2UClvZ9fCRgR",
+          "name": "Groq account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mon/Wed/Fri posting.  Language alternates every post: English, Tamil, English, Tamil ...\n// Poster type is fixed per weekday: Mon = mobile, Wed = laptop, Fri = web\n// => all 6 posters (mobile/laptop/web x English/Tamil) come out in every 2 weeks.\nconst OFFSET = 1;   // 1 => Monday 12 Oct 2026 = English. If your first post comes out in the other language, change 1 to 0\n\nconst now = $now;   // workflow timezone\nconst days = Math.floor(Date.UTC(now.year, now.month - 1, now.day) / 86400000);\nconst weekIndex = Math.floor((days + 3) / 7);              // weeks start on Monday\nconst slot = ({ 1: 0, 3: 1, 5: 2 })[now.weekday] ?? 0;    // Mon=0, Wed=1, Fri=2\nconst idx = weekIndex * 3 + slot + OFFSET;                 // post number\n\nconst language = idx % 2 === 0 ? 'English' : 'Tamil';\nconst layout = ['mobile', 'laptop', 'web'][slot];\n\nreturn [{\n  json: {\n    ...$json,\n    language,\n    variant: `${layout}_${language.toLowerCase()}`,\n    languageInstruction: language === 'Tamil'\n      ? 'Write the entire caption in Tamil (தமிழ்) script only. Keep brand and technical words (OMNERA, EMI, Field Agents) in English. Length: between 115 and 135 words. Never write fewer than 110 words.'\n      : 'Write the entire caption in English only. Length: between 115 and 135 words. Never write fewer than 110 words.',\n    hashtagInstruction: language === 'Tamil'\n      ? 'Give 10 hashtags: 7 English and 3 Tamil.'\n      : 'Give 10 English hashtags.'\n  }\n}];"
+      },
+      "id": "d724b109-927d-487e-a1e8-42d4e476b2c2",
+      "name": "Language Picker",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1312,
+        320
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Content_writer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insta media": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Topic_Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Topic_Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Instagram Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build Instagram Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Topic_Generator": {
+      "main": [
+        [
+          {
+            "node": "Language Picker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content_writer": {
+      "main": [
+        [
+          {
+            "node": "Hastag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hastag": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Hastag",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Instagram Payload": {
+      "main": [
+        [
+          {
+            "node": "Insta media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Img1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Img1": {
+      "main": [
+        [
+          {
+            "node": "HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Topic_Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Language Picker": {
+      "main": [
+        [
+          {
+            "node": "Content_writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6bdf782a-6bca-45c9-8a9d-9d0a36cdfbf0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9832949b07b27dd5d0f1395c52a45c98e348c431fa22601046aa24d6e5399b9d"
+  },
+  "nodeGroups": [],
+  "id": "mGM8fgfVRpEcQlis",
+  "tags": []
+}
